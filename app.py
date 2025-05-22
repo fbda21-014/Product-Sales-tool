@@ -7,6 +7,7 @@ import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 import numpy as np
 import re
+import os
  
 # Load your data
 # Define correct column names manually
@@ -751,10 +752,10 @@ def update_statistical_analysis(selected_metric, selected_request):
     else:
         return "⚠️ Invalid metric selected."
 
+import os
+
 if __name__ == '__main__':
-    app_analysis.run(
-        debug=False,
-        host='0.0.0.0',
-        port=int(os.environ.get('PORT', 8080))
-    )
+    port = int(os.environ.get('PORT', 8080))
+    app_analysis.run(host='0.0.0.0', port=port, debug=False)
+
 
