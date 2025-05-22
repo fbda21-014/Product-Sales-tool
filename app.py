@@ -136,8 +136,6 @@ header = html.Div(
 app_analysis = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app_analysis.server
  
-USERS = {"admin": "Ouna321", "user": "Ouna123"}
-auth = dash_auth.BasicAuth(app_analysis, USERS)
  
 tabs = dcc.Tabs(
     id="main-tabs",
