@@ -13,7 +13,7 @@ import re
 columns = ["Country", "Continent", "Age Group", "Gender", "Platform", "Request Type", "Job Type", "Referral Source", "Inquiry Time", "Date"]
 
 # Load the CSV by skipping the faulty header
-df = pd.read_csv("ONA.csv", sep=",", names=columns, skiprows=1)
+df = pd.read_csv("Ona.csv", sep=",", names=columns, skiprows=1)
 
 # Convert 'Date' column to datetime
 df["Date"] = pd.to_datetime(df["Date"])
