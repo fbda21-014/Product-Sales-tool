@@ -768,7 +768,7 @@ def update_statistical_analysis(selected_metric, selected_column):
 import os
 
 if __name__ == '__main__':
-    app_analysis.run_server(
+    app_analysis.run(
         debug=False,
         host='0.0.0.0',
         port=int(os.environ.get('PORT', 8080))
