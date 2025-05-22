@@ -53,27 +53,39 @@ GRAPH_COLORS = [PRIMARY_COLOR, SECONDARY_COLOR, ACCENT_COLOR, '#ab63fa', '#FFA15
  
 dropdown_style = {
     'width': '100%',
-    'padding': '14px 16px',
+    'padding': '12px 14px',
     'border': '1px solid #ced4da',
     'borderRadius': '8px',
-    'backgroundColor': '#f1f3f5',
+    'backgroundColor': '#ffffff',
     'color': TEXT_COLOR,
-    'fontSize': '1rem',
-    'marginBottom': '1.2rem',
-    'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.06)',
+    'fontSize': '0.95rem',
+    'marginBottom': '1rem',
+    'boxShadow': '0 2px 4px rgba(0, 0, 0, 0.1)',
     'transition': 'all 0.25s ease',
     'outline': 'none',
     'cursor': 'pointer'
 }
 
 graph_container_style = {
-    'backgroundColor': '#e0e0e0',  # Darker grey
-    'borderRadius': '16px',
-    'boxShadow': '0 8px 16px rgba(0, 0, 0, 0.08)',
-    'padding': '2rem',
-    'marginBottom': '2rem',
-    'border': '1px solid #dee2e6',
-    'transition': 'all 0.3s ease-in-out'
+    'backgroundColor': '#ffffff',
+    'borderRadius': '12px',
+    'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
+    'padding': '1.5rem',
+    'marginBottom': '1rem',
+    'border': '1px solid #e9ecef',
+    'height': '600px'
+}
+
+sidebar_style = {
+    'backgroundColor': '#ffffff',
+    'borderRadius': '12px',
+    'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
+    'padding': '1.5rem',
+    'marginBottom': '1rem',
+    'border': '1px solid #e9ecef',
+    'height': 'fit-content',
+    'position': 'sticky',
+    'top': '20px'
 }
 
 tab_selected_style = {
@@ -82,11 +94,11 @@ tab_selected_style = {
     'border': 'none',
     'borderBottom': '4px solid ' + ACCENT_COLOR,
     'fontWeight': '700',
-    'fontSize': '1.1rem',
-    'padding': '16px 24px',
-    'borderRadius': '16px 16px 0 0',
+    'fontSize': '1rem',
+    'padding': '12px 20px',
+    'borderRadius': '12px 12px 0 0',
     'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.1)',
-    'marginRight': '10px',
+    'marginRight': '8px',
     'letterSpacing': '0.5px',
     'transition': 'all 0.3s ease'
 }
@@ -94,12 +106,12 @@ tab_selected_style = {
 tab_style = {
     'backgroundColor': '#f8f9fa',
     'color': TEXT_COLOR,
-    'fontSize': '1.05rem',
-    'padding': '16px 24px',
+    'fontSize': '0.95rem',
+    'padding': '12px 20px',
     'cursor': 'pointer',
     'border': 'none',
-    'borderRadius': '16px 16px 0 0',
-    'marginRight': '10px',
+    'borderRadius': '12px 12px 0 0',
+    'marginRight': '8px',
     'transition': 'all 0.3s ease-in-out',
     'fontWeight': '500',
     'letterSpacing': '0.3px',
@@ -110,7 +122,7 @@ header = html.Div(
     children=[
         html.H1("📊 Dashboard for Product Sales Analysis", style={
             'color': '#ffffff',
-            'fontSize': '2.8rem',
+            'fontSize': '2.5rem',
             'fontWeight': 'bold',
             'textAlign': 'center',
             'marginBottom': '0.2rem',
@@ -125,8 +137,8 @@ header = html.Div(
         })
     ],
     style={
-        'background': 'linear-gradient(135deg, #3f51b5, #5a55ae)',  # You can use PRIMARY_COLOR if defined
-        'padding': '2rem',
+        'background': 'linear-gradient(135deg, #3f51b5, #5a55ae)',
+        'padding': '1.5rem',
         'borderRadius': '16px',
         'boxShadow': '0 6px 12px rgba(0, 0, 0, 0.1)',
         'marginBottom': '2rem'
@@ -135,354 +147,360 @@ header = html.Div(
  
 app_analysis = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app_analysis.server
- 
- 
+
+USERS = {"admin": "Ouna321", "user": "Ouna123"}
+auth = dash_auth.BasicAuth(app_analysis, USERS)
+
+# Sidebar filters component
+sidebar_filters = html.Div(
+    id="sidebar-filters",
+    style=sidebar_style,
+    children=[
+        html.H4("Filters", style={'color': TEXT_COLOR, 'marginBottom': '1.5rem', 'fontWeight': 'bold'}),
+        html.Div(id="dynamic-filters")
+    ]
+)
+
+# Main tabs
 tabs = dcc.Tabs(
     id="main-tabs",
     value="geographical",
     children=[
-    # Geographical Distribution
         dcc.Tab(
-            label="🌎 Requests by Geographical Location",
+            label="🌎 Geography",
             value="geographical",
             selected_style=tab_selected_style,
-            style=tab_style,
-            children=[
-            html.Div([
-                dbc.Row([
-                    dbc.Col([
-                        html.Label("Continent", style={'fontWeight': 'bold'}),
-                        dcc.Dropdown(
-                            id="geo-continent-filter",
-                            options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
-                            value=None,
-                            clearable=True,
-                            placeholder="Select Continent",
-                            style=dropdown_style
-                        ),
-                    ], md=4),
-                    dbc.Col([
-                        html.Label("Country", style={'fontWeight': 'bold'}),
-                        dcc.Dropdown(
-                            id="geo-country-filter",
-                            options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
-                            value=None,
-                            clearable=True,
-                            placeholder="Select Country",
-                            style=dropdown_style
-                        ),
-                    ], md=4),
-                    dbc.Col([
-                        html.Label("Platform", style={'fontWeight': 'bold'}),
-                        dcc.Dropdown(
-                            id="geo-platform-filter",
-                            options=[{"label": p, "value": p} for p in sorted(df[PLATFORM].dropna().unique())],
-                            value=None,
-                            clearable=True,
-                            placeholder="Select Platform",
-                            style=dropdown_style
-                        ),
-                    ], md=4),
-                ], className="g-2", style={'marginBottom': '1.2rem'}),
-                dcc.Graph(id="geo-distribution-graph", style=graph_container_style),
-            ], style={'maxWidth': '900px', 'margin': 'auto'})
-            ]
+            style=tab_style
         ),
-
-    # Gender Distribution
-    dcc.Tab(
-        label="👫 Requests by Gender",
-        value="gender_distribution",
-        selected_style=tab_selected_style,
-        style=tab_style,
-        children=[
-            html.Div([
-                dbc.Row([
-                    dbc.Col([
-                            html.Label("Continent", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="gender-continent-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Continent",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Country", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="gender-country-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Country",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                    dbc.Col([
-                        html.Label("Request Type", style={'fontWeight': 'bold'}),
-                        dcc.Dropdown(
-                            id="request-type-gender-filter",
-                            options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
-                            value=None,
-                            clearable=True,
-                            placeholder="Select Request Type",
-                            style=dropdown_style
-                        ),
-                    ], md=4),
-                ], className="g-2", style={'marginBottom': '1.2rem'}),
-                dcc.Graph(id="gender-distribution-graph", style=graph_container_style)
-            ], style={'maxWidth': '900px', 'margin': 'auto'})
-        ]
-    ),
-
-            # Time Period Distribution
         dcc.Tab(
-            label="📅 Requests over Time Period",
+            label="👫 Gender",
+            value="gender_distribution",
+            selected_style=tab_selected_style,
+            style=tab_style
+        ),
+        dcc.Tab(
+            label="📅 Time Period",
             value="time_period",
             selected_style=tab_selected_style,
-            style=tab_style,
-            children=[
-                html.Div([
-                    dbc.Row([
-                        dbc.Col([
-                            html.Label("Continent", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="time-continent-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Continent",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Country", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="time-country-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Country",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Time Granularity", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="time-granularity-filter",
-                                options=[
-                                    {"label": "Day", "value": "D"},
-                                    {"label": "Week", "value": "W"},
-                                    {"label": "Month", "value": "MS"},
-                                    {"label": "Year", "value": "Y"}
-                                ],
-                                value="MS",
-                                clearable=False,
-                                style=dropdown_style
-                            ),
-                          ], md=4),
-                    ], className="g-2", style={'marginBottom': '1.2rem'}),
-                    dcc.Graph(id="time-period-graph", style=graph_container_style),
-                ], style={'maxWidth': '900px', 'margin': 'auto'})    
-            ]
+            style=tab_style
         ),
-
-            # Product Interest Tab (using Platform as Product)
         dcc.Tab(
-            label="🛒 Product Interest by Platform",
+            label="🛒 Product Interest",
             value="product",
             selected_style=tab_selected_style,
-            style=tab_style,
-            children=[
-                html.Div([
-                    dbc.Row([
-                        dbc.Col([
-                            html.Label("Continent", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="product-continent-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Continent",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Country", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="product-country-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Country",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                    ], className="g-2", style={'marginBottom': '1.2rem'}),
-                    dcc.Graph(id="product-interest-map", style=graph_container_style),
-                ], style={'maxWidth': '900px', 'margin': 'auto'})
-            ]
+            style=tab_style
         ),
-
-    # Age Distribution
-    dcc.Tab(
-        label="👴 Requests by Age",
-        value="age_distribution",
-        selected_style=tab_selected_style,
-        style=tab_style,
-        children=[
-            html.Div([
-                dbc.Row([
-                        dbc.Col([
-                            html.Label("Continent", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="age-continent-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Continent",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Country", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="age-country-filter",
-                                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Country",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Request Type", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="request-type-age-filter",
-                                options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
-                                value=None,
-                                clearable=True,
-                                placeholder="Select Request Type",
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                    ], className="g-2", style={'marginBottom': '1.2rem'}),
-                    dcc.Graph(id="age-distribution-graph", style=graph_container_style),
-                ], style={'maxWidth': '900px', 'margin': 'auto'})
-            ]
-        ),
-        # Statistical Analysis Tab
         dcc.Tab(
-            label="📊 Statistical Analysis",
+            label="👴 Age",
+            value="age_distribution",
+            selected_style=tab_selected_style,
+            style=tab_style
+        ),
+        dcc.Tab(
+            label="📊 Statistics",
             value="statistical_analysis",
             selected_style=tab_selected_style,
-            style=tab_style,
-            children=[
-                html.Div([
-                    dbc.Row([
-                        dbc.Col([
-                            html.Label("Metric", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="statistical-metric",
-                                options=[
-                                    {"label": "Mean", "value": "mean"},
-                                    {"label": "Median", "value": "median"},
-                                    {"label": "Mode", "value": "mode"},
-                                    {"label": "Standard Deviation", "value": "std"}
-                                ],
-                                value="mean",
-                                clearable=False,
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                        dbc.Col([
-                            html.Label("Column", style={'fontWeight': 'bold'}),
-                            dcc.Dropdown(
-                                id="statistical-column",
-                                options=[
-                                    {"label": "Age (approx)", "value": "Age (approx)"},
-                                    {"label": INQUIRY_TIME, "value": INQUIRY_TIME},
-                                    {"label": DATE, "value": DATE}
-                                ] + [
-                                    {"label": col, "value": col} for col in numeric_columns if col not in ["Age (approx)"]
-                                ],
-                                value="Age (approx)",
-                                clearable=False,
-                                style=dropdown_style
-                            ),
-                        ], md=4),
-                    ], className="g-2", style={'marginBottom': '1.2rem'}),
-                    html.Div(id="statistical-analysis-output", style=graph_container_style),
-                ], style={'maxWidth': '900px', 'margin': 'auto'})
-            ]
-        ),
+            style=tab_style
+        )
     ]
 )
+
+# Main content area
+main_content = html.Div(id="main-content", style=graph_container_style)
  
 app_analysis.layout = html.Div([
     header,
-    tabs
-], style = {
-    'backgroundColor': '#d1f2eb',  # Soft teal background
+    tabs,
+    dbc.Row([
+        dbc.Col([sidebar_filters], md=3, style={'paddingRight': '1rem'}),
+        dbc.Col([main_content], md=9, style={'paddingLeft': '1rem'})
+    ], style={'marginTop': '1rem'})
+], style={
+    'backgroundColor': '#f8f9fc',
     'minHeight': '100vh',
     'padding': '20px',
-    'color': TEXT_COLOR  # Maintain your consistent text color
-}
-)
+    'color': TEXT_COLOR
+})
 
-# Geographical tab callbacks
-# Geographical tab callbacks
+# Callback to update sidebar filters based on selected tab
+@app_analysis.callback(
+    Output("dynamic-filters", "children"),
+    [Input("main-tabs", "value")]
+)
+def update_sidebar_filters(selected_tab):
+    if selected_tab == "geographical":
+        return [
+            html.Label("Continent", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="geo-continent-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Continent",
+                style=dropdown_style
+            ),
+            html.Label("Country", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="geo-country-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Country",
+                style=dropdown_style
+            ),
+            html.Label("Request Type", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="geo-request-type-filter",
+                options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Request Type",
+                style=dropdown_style
+            ),
+        ]
+    
+    elif selected_tab == "gender_distribution":
+        return [
+            html.Label("Continent", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="gender-continent-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Continent",
+                style=dropdown_style
+            ),
+            html.Label("Country", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="gender-country-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Country",
+                style=dropdown_style
+            ),
+            html.Label("Request Type", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="request-type-gender-filter",
+                options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Request Type",
+                style=dropdown_style
+            ),
+        ]
+    
+    elif selected_tab == "time_period":
+        return [
+            html.Label("Continent", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="time-continent-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Continent",
+                style=dropdown_style
+            ),
+            html.Label("Country", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="time-country-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Country",
+                style=dropdown_style
+            ),
+            html.Label("Time Granularity", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="time-granularity-filter",
+                options=[
+                    {"label": "Day", "value": "D"},
+                    {"label": "Week", "value": "W"},
+                    {"label": "Month", "value": "MS"},
+                    {"label": "Year", "value": "Y"}
+                ],
+                value="MS",
+                clearable=False,
+                style=dropdown_style
+            ),
+            html.Label("Request Type", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="time-request-type-filter",
+                options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Request Type",
+                style=dropdown_style
+            ),
+        ]
+    
+    elif selected_tab == "product":
+        return [
+            html.Label("Continent", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="product-continent-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Continent",
+                style=dropdown_style
+            ),
+            html.Label("Country", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="product-country-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Country",
+                style=dropdown_style
+            ),
+        ]
+    
+    elif selected_tab == "age_distribution":
+        return [
+            html.Label("Continent", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="age-continent-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[CONTINENT].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Continent",
+                style=dropdown_style
+            ),
+            html.Label("Country", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="age-country-filter",
+                options=[{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Country",
+                style=dropdown_style
+            ),
+            html.Label("Request Type", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="request-type-age-filter",
+                options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Request Type",
+                style=dropdown_style
+            ),
+        ]
+    
+    elif selected_tab == "statistical_analysis":
+        return [
+            html.Label("Metric", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="statistical-metric",
+                options=[
+                    {"label": "Mean", "value": "mean"},
+                    {"label": "Median", "value": "median"},
+                    {"label": "Mode", "value": "mode"},
+                    {"label": "Standard Deviation", "value": "std"}
+                ],
+                value="mean",
+                clearable=False,
+                style=dropdown_style
+            ),
+            html.Label("Column", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="statistical-column",
+                options=[
+                    {"label": "Age (approx)", "value": "Age (approx)"},
+                    {"label": INQUIRY_TIME, "value": INQUIRY_TIME},
+                    {"label": DATE, "value": DATE}
+                ] + [
+                    {"label": col, "value": col} for col in numeric_columns if col not in ["Age (approx)"]
+                ],
+                value="Age (approx)",
+                clearable=False,
+                style=dropdown_style
+            ),
+            html.Label("Request Type", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
+            dcc.Dropdown(
+                id="statistical-request-filter",
+                options=[{"label": rt, "value": rt} for rt in sorted(df[REQUEST_TYPE].dropna().unique())],
+                value=None,
+                clearable=True,
+                placeholder="Select Request Type",
+                style=dropdown_style
+            ),
+        ]
+    
+    return []
+
+# Callback to update main content based on selected tab
+@app_analysis.callback(
+    Output("main-content", "children"),
+    [Input("main-tabs", "value")]
+)
+def update_main_content(selected_tab):
+    if selected_tab == "geographical":
+        return dcc.Graph(id="geo-distribution-graph", style={'height': '100%'})
+    elif selected_tab == "gender_distribution":
+        return dcc.Graph(id="gender-distribution-graph", style={'height': '100%'})
+    elif selected_tab == "time_period":
+        return dcc.Graph(id="time-period-graph", style={'height': '100%'})
+    elif selected_tab == "product":
+        return dcc.Graph(id="product-interest-map", style={'height': '100%'})
+    elif selected_tab == "age_distribution":
+        return dcc.Graph(id="age-distribution-graph", style={'height': '100%'})
+    elif selected_tab == "statistical_analysis":
+        return html.Div(id="statistical-analysis-output", style={
+            'padding': '2rem',
+            'fontSize': '1.2rem',
+            'textAlign': 'center',
+            'backgroundColor': '#f8f9fa',
+            'borderRadius': '8px',
+            'margin': '2rem',
+            'minHeight': '200px',
+            'display': 'flex',
+            'alignItems': 'center',
+            'justifyContent': 'center'
+        })
+    
+    return html.Div("Select a tab to view content")
+
+# All your existing callbacks remain the same
 @app_analysis.callback(
     Output("geo-distribution-graph", "figure"),
-    [Input("geo-continent-filter", "value"),
-     Input("geo-country-filter", "value"),
-     Input("geo-platform-filter", "value")]
+    [
+        Input("geo-continent-filter", "value"),
+        Input("geo-country-filter", "value"),
+        Input("geo-request-type-filter", "value")
+    ]
 )
-def update_geo_distribution_graph(selected_continent, selected_country, selected_platform):
-    # Start with full data
+def update_geo_distribution_graph(selected_continent, selected_country, selected_request):
     filtered_df = df.copy()
-    
-    # Apply filters
+
     if selected_continent:
         filtered_df = filtered_df[filtered_df[CONTINENT] == selected_continent]
     if selected_country:
         filtered_df = filtered_df[filtered_df[COUNTRY] == selected_country]
-    if selected_platform:
-        filtered_df = filtered_df[filtered_df[PLATFORM] == selected_platform]
-    
-    # Group by country for choropleth map
+    if selected_request:
+        filtered_df = filtered_df[filtered_df[REQUEST_TYPE] == selected_request]
+
     geo_df = filtered_df.groupby(COUNTRY).size().reset_index(name="Number of Requests")
-    
+
     fig = px.choropleth(
-        geo_df, locations=COUNTRY, locationmode="country names", color="Number of Requests",
-        color_continuous_scale=px.colors.sequential.Plasma, 
+        geo_df,
+        locations=COUNTRY,
+        locationmode="country names",
+        color="Number of Requests",
+        color_continuous_scale=px.colors.sequential.Plasma,
         title="Geographical Distribution of Requests"
     )
-    
+
     fig.update_layout(
         title_x=0.5,
         geo=dict(
             showframe=False,
-            showcoastlines=True,
+            showcoastlines=True
         )
     )
-    
+
     return fig
 
-# Add dependency for geo-country-filter on geo-continent-filter
-@app_analysis.callback(
-    Output("geo-country-filter", "options"),
-    [Input("geo-continent-filter", "value")]
-)
-def update_geo_country_options(selected_continent):
-    if selected_continent:
-        filtered_countries = df[df[CONTINENT] == selected_continent][COUNTRY].dropna().unique()
-        return [{"label": c, "value": c} for c in sorted(filtered_countries)]
-    else:
-        return [{"label": c, "value": c} for c in sorted(df[COUNTRY].dropna().unique())]
- 
 # Product Interest Graph (using Platform as Product)
 @app_analysis.callback(
     Output("product-interest-map", "figure"),
@@ -567,29 +585,27 @@ def update_age_country_options(selected_continent):
 # Updated Time Period Graph with Continent and Country filters
 @app_analysis.callback(
     Output("time-period-graph", "figure"),
-    [Input("time-granularity-filter", "value"),
-     Input("time-continent-filter", "value"),
-     Input("time-country-filter", "value")]
+    [
+        Input("time-granularity-filter", "value"),
+        Input("time-continent-filter", "value"),
+        Input("time-country-filter", "value"),
+        Input("time-request-type-filter", "value")
+    ]
 )
-def update_time_graph(granularity, selected_continent, selected_country):
-    # Filter the data first
+def update_time_graph(granularity, selected_continent, selected_country, selected_request):
     filtered_df = df.copy()
     if selected_continent:
         filtered_df = filtered_df[filtered_df[CONTINENT] == selected_continent]
     if selected_country:
         filtered_df = filtered_df[filtered_df[COUNTRY] == selected_country]
-    
-    # Resample request data by selected time unit (day, month, etc.)
+    if selected_request:
+        filtered_df = filtered_df[filtered_df[REQUEST_TYPE] == selected_request]
+
     data = filtered_df.set_index(DATE).resample(granularity)[REQUEST_TYPE].count().reset_index()
     data.rename(columns={REQUEST_TYPE: 'Number of Requests'}, inplace=True)
 
-    # Create a purple line chart
     fig = px.line(
-        data,
-        x=DATE,
-        y="Number of Requests",
-        title="Requests Over Time",
-        markers=True
+        data, x=DATE, y="Number of Requests", title="Requests Over Time", markers=True
     )
     fig.update_traces(line=dict(color="purple"))
     fig.update_layout(title_x=0.5)
@@ -712,58 +728,54 @@ def update_age_graph(selected_continent, selected_country, selected_request):
 # Statistical Analysis
 @app_analysis.callback(
     Output("statistical-analysis-output", "children"),
-    [Input("statistical-metric", "value"),
-     Input("statistical-column", "value")]
+    [
+        Input("statistical-metric", "value"),
+        Input("statistical-column", "value"),
+        Input("statistical-request-filter", "value")
+    ]
 )
-def update_statistical_analysis(selected_metric, selected_column):
-    if not selected_metric or not selected_column:
-        return "Select a metric and a column for analysis."
+def update_statistical_analysis(selected_metric, selected_column, selected_request):
+    filtered_df = df.copy()
+    if selected_request:
+        filtered_df = filtered_df[filtered_df[REQUEST_TYPE] == selected_request]
 
-    series = df[selected_column].dropna()
+    series = filtered_df[selected_column].dropna()
 
-    # Try converting to numeric if possible
     try:
         series_numeric = pd.to_numeric(series, errors='coerce').dropna()
     except:
         series_numeric = pd.Series(dtype=float)
 
-    result = "No valid data found."
-
-    # For numeric data
     if not series_numeric.empty:
         if selected_metric == "mean":
-            result = f"The mean of {selected_column} is: {series_numeric.mean():.2f}"
+            return f"The mean of {selected_column} is: {series_numeric.mean():.2f}"
         elif selected_metric == "median":
-            result = f"The median of {selected_column} is: {series_numeric.median():.2f}"
+            return f"The median of {selected_column} is: {series_numeric.median():.2f}"
         elif selected_metric == "std":
-            result = f"The standard deviation of {selected_column} is: {series_numeric.std():.2f}"
+            return f"The standard deviation of {selected_column} is: {series_numeric.std():.2f}"
         elif selected_metric == "mode":
             mode_val = series_numeric.mode()
-            result = f"The mode of {selected_column} is: {mode_val[0]:.2f}" if not mode_val.empty else "No mode found."
-        return result
+            return f"The mode of {selected_column} is: {mode_val[0]:.2f}" if not mode_val.empty else "No mode found."
 
-    # For datetime columns
     if pd.api.types.is_datetime64_any_dtype(series):
         if selected_metric == "mean":
-            result = f"The mean date of {selected_column} is: {series.mean().date()}"
+            return f"The mean date of {selected_column} is: {series.mean().date()}"
         elif selected_metric == "median":
-            result = f"The median date of {selected_column} is: {series.median().date()}"
+            return f"The median date of {selected_column} is: {series.median().date()}"
         elif selected_metric == "std":
-            result = f"The standard deviation is: {series.std()}"
+            return f"The standard deviation is: {series.std()}"
         elif selected_metric == "mode":
             mode_val = series.mode()
-            result = f"The mode of {selected_column} is: {mode_val[0].date()}" if not mode_val.empty else "No mode found."
-        return result
+            return f"The mode of {selected_column} is: {mode_val[0].date()}" if not mode_val.empty else "No mode found."
 
-    # For string/categorical data (like Inquiry Time)
     if selected_metric == "mode":
         mode_val = series.mode()
-        result = f"The mode of {selected_column} is: {mode_val[0]}" if not mode_val.empty else "No mode found."
-        return result
+        return f"The mode of {selected_column} is: {mode_val[0]}" if not mode_val.empty else "No mode found."
 
     return f"{selected_metric.title()} is not applicable to {selected_column}."
  
-import os
+if __name__ == '__main__':
+    app_analysis.run(debug=True)
 
 if __name__ == '__main__':
     app_analysis.run(
