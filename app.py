@@ -402,20 +402,6 @@ def update_sidebar_filters(selected_tab):
                 clearable=False,
                 style=dropdown_style
             ),
-            html.Label("Column", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
-            dcc.Dropdown(
-                id="statistical-column",
-                options=[
-                    {"label": "Age (approx)", "value": "Age (approx)"},
-                    {"label": INQUIRY_TIME, "value": INQUIRY_TIME},
-                    {"label": DATE, "value": DATE}
-                ] + [
-                    {"label": col, "value": col} for col in numeric_columns if col not in ["Age (approx)"]
-                ],
-                value="Age (approx)",
-                clearable=False,
-                style=dropdown_style
-            ),
             html.Label("Request Type", style={'fontWeight': 'bold', 'marginBottom': '0.5rem'}),
             dcc.Dropdown(
                 id="statistical-request-filter",
@@ -730,52 +716,40 @@ def update_age_graph(selected_continent, selected_country, selected_request):
     Output("statistical-analysis-output", "children"),
     [
         Input("statistical-metric", "value"),
-        Input("statistical-column", "value"),
         Input("statistical-request-filter", "value")
     ]
 )
-def update_statistical_analysis(selected_metric, selected_column, selected_request):
-    filtered_df = df.copy()
-    if selected_request:
-        filtered_df = filtered_df[filtered_df[REQUEST_TYPE] == selected_request]
+def update_statistical_analysis(selected_metric, selected_request):
+    if not selected_metric or not selected_request:
+        return "Please select both a metric and a request type."
 
-    series = filtered_df[selected_column].dropna()
+    # Filter dataset to selected request type
+    filtered_df = df[df[REQUEST_TYPE] == selected_request]
 
-    try:
-        series_numeric = pd.to_numeric(series, errors='coerce').dropna()
-    except:
-        series_numeric = pd.Series(dtype=float)
+    # Group by Job Type (assuming it represents sales roles)
+    job_counts = filtered_df[JOB_TYPE].value_counts()
 
-    if not series_numeric.empty:
-        if selected_metric == "mean":
-            return f"The mean of {selected_column} is: {series_numeric.mean():.2f}"
-        elif selected_metric == "median":
-            return f"The median of {selected_column} is: {series_numeric.median():.2f}"
-        elif selected_metric == "std":
-            return f"The standard deviation of {selected_column} is: {series_numeric.std():.2f}"
-        elif selected_metric == "mode":
-            mode_val = series_numeric.mode()
-            return f"The mode of {selected_column} is: {mode_val[0]:.2f}" if not mode_val.empty else "No mode found."
+    if job_counts.empty:
+        return f"No job data available for '{selected_request}'."
 
-    if pd.api.types.is_datetime64_any_dtype(series):
-        if selected_metric == "mean":
-            return f"The mean date of {selected_column} is: {series.mean().date()}"
-        elif selected_metric == "median":
-            return f"The median date of {selected_column} is: {series.median().date()}"
-        elif selected_metric == "std":
-            return f"The standard deviation is: {series.std()}"
-        elif selected_metric == "mode":
-            mode_val = series.mode()
-            return f"The mode of {selected_column} is: {mode_val[0].date()}" if not mode_val.empty else "No mode found."
-
-    if selected_metric == "mode":
-        mode_val = series.mode()
-        return f"The mode of {selected_column} is: {mode_val[0]}" if not mode_val.empty else "No mode found."
-
-    return f"{selected_metric.title()} is not applicable to {selected_column}."
- 
-if __name__ == '__main__':
-    app_analysis.run(debug=True)
+    if selected_metric == "mean":
+        value = job_counts.mean()
+        return f"🔍 Mean requests per job type for '{selected_request}': {value:.2f}"
+    elif selected_metric == "median":
+        value = job_counts.median()
+        return f"📊 Median requests per job type for '{selected_request}': {value:.2f}"
+    elif selected_metric == "mode":
+        mode_val = job_counts.mode()
+        value = mode_val[0] if not mode_val.empty else "N/A"
+        return f"📌 Mode of requests per job type for '{selected_request}': {value}"
+    elif selected_metric == "std":
+        value = job_counts.std()
+        return f"📈 Standard deviation of requests for '{selected_request}': {value:.2f}"
+    elif selected_metric == "count":
+        value = job_counts.sum()
+        return f"📦 Total requests made for '{selected_request}': {value}"
+    else:
+        return "⚠️ Invalid metric selected."
 
 if __name__ == '__main__':
     app_analysis.run(
